@@ -29,14 +29,14 @@ namespace KubectlAuth0
                 ResponseMode = OidcClientOptions.AuthorizeResponseMode.Redirect,
                 Browser = new SystemBrowser(8088),
                 RedirectUri = "http://localhost:8088",
-                Scope = "profile openid email",
+                Scope = "profile openid email offline_access",
                 LoadProfile = true,
             };
             OidcClient client = new OidcClient(options);
             await client.PrepareLoginAsync();
             LoginResult result = await client.LoginAsync();
             string nameSuffix = Convert.ToBase64String(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(clientId))).Substring(0, 5);
-
+            
 
             var info = new ProcessStartInfo
             {
@@ -46,7 +46,8 @@ namespace KubectlAuth0
             info.Arguments += "--auth-provider=oidc ";
             info.Arguments += $"--auth-provider-arg=idp-issuer-url={authority} ";
             info.Arguments += $"--auth-provider-arg=client-id={clientId} ";
-            info.Arguments += $"--auth-provider-arg=id-token={result.IdentityToken}";
+            info.Arguments += $"--auth-provider-arg=id-token={result.IdentityToken} ";
+            info.Arguments += $"--auth-provider-arg=refresh-token={result.RefreshToken}";
 
             var p = Process.Start(info);
             p.WaitForExit();
